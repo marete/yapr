@@ -140,8 +140,6 @@ func ParseStatString(s string) (Stat, error) {
 		return ret, err
 	}
 
-	// Scan in the PID and "(comm)". We will remove the left most
-	// and right most parentheses later below.
 	_, err = fmt.Sscanf(s[0:i+1], "%d", &ret.PID)
 	if err != nil {
 		return ret, err
