@@ -80,11 +80,11 @@ func ParseStatString(s string) (Stat, error) {
 		return ret, errors.New("expected ')'")
 	}
 
-	if len(s) < i+3 { // Skip "[pid] (comm)[[:space:]]"
+	if len(s) < i+2 {
 		return ret, errors.New("input string too short")
 	}
 
-	_, err := fmt.Sscanf(s[i+2:], "%c %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+	_, err := fmt.Sscanf(strings.TrimSpace(s[i+1:]), "%c %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		&ret.State,
 		&ret.PPID,
 		&ret.PGID,
