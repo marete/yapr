@@ -40,6 +40,11 @@ func TestParseStatString(t *testing.T) {
 			false,
 			`🤦syst🤦emd🤦`,
 		},
+		{
+			`1 (systemd)`,
+			true,
+			"",
+		},
 	}
 
 	for _, tc := range tt {
