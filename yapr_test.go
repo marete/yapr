@@ -82,3 +82,13 @@ func TestParseStatString(t *testing.T) {
 		}
 	}
 }
+
+func FuzzParseStatString(f *testing.F) {
+	for _, tc := range tt {
+		f.Add(tc.is)
+	}
+
+	f.Fuzz(func(t *testing.T, s string) {
+		ParseStatString(s)
+	})
+}
