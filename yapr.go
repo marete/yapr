@@ -154,7 +154,11 @@ func ParseStatString(s string) (Stat, error) {
 		return ret, errors.New("expected '(' to come before ')'")
 	}
 
-	ret.Comm = s[h+1 : i]
+	comm := s[h+1 : i]
+	if len(comm) == 0 || strings.Index(comm, "\n") != -1 || strings.Index(comm, fmt.Sprintf("%c", 0)) != -1 {
+		return ret, errors.New("parsed commmand (comm): %s: should not be empty or contain newline or the zero character")
+	}
+	ret.Comm = comm
 
 	return ret, err
 }
