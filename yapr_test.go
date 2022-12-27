@@ -1,6 +1,12 @@
 package yapr
 
-import "testing"
+import (
+	"errors"
+	"regexp"
+	"strconv"
+	"strings"
+	"testing"
+)
 
 var tt = []struct {
 	is               string
@@ -74,6 +80,11 @@ var tt = []struct {
 		true,
 		"",
 	},
+	{
+		"1(0)R 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9",
+		false,
+		"0",
+	},
 }
 
 func TestParseStatString(t *testing.T) {
@@ -89,12 +100,25 @@ func TestParseStatString(t *testing.T) {
 	}
 }
 
+var re = regexp.MustCompile(`^(?:[\t\v\f\r ]){0,}(?:[\d]){1,}(?:[\t\v\f\r ]){0,}\((?:[^\n\x00]){1,}\)(?:[\t\v\f\r ]){0,}[^\n\t\v\f\r ]{1}(?:[\t\v\f\r ]{1,}\-{0,1}(?:[\d]){1,}){5}(?:[\t\v\f\r ]{1,}\-{0,0}(?:[\d]){1,}){7}(?:[\t\v\f\r ]{1,}\-{0,1}(?:[\d]){1,}){6}(?:[\t\v\f\r ]{1,}\-{0,0}(?:[\d]){1,}){2}(?:[\t\v\f\r ]{1,}\-{0,1}(?:[\d]){1,}){1}(?:[\t\v\f\r ]{1,}\-{0,0}(?:[\d]){1,}){13}(?:[\t\v\f\r ]{1,}\-{0,1}(?:[\d]){1,}){2}(?:[\t\v\f\r ]{1,}\-{0,0}(?:[\d]){1,}){4}(?:[\t\v\f\r ]{1,}\-{0,1}(?:[\d]){1,}){1}(?:[\t\v\f\r ]{1,}\-{0,0}(?:[\d]){1,}){7}(?:[\t\v\f\r ]{1,}\-{0,1}(?:[\d]){1,}){1}[^)]*$`)
+
 func FuzzParseStatString(f *testing.F) {
 	for _, tc := range tt {
 		f.Add(tc.is)
 	}
 
 	f.Fuzz(func(t *testing.T, s string) {
-		ParseStatString(s)
+		_, err := ParseStatString(s)
+
+		if err == nil && !re.MatchString(s) {
+			t.Errorf("expected non-nil error because input %s fails to match regexp %v",
+				s, re)
+		}
+
+		if err != nil && re.MatchString(s) && !errors.Is(err, strconv.ErrRange) && strings.Index(err.Error(), "integer overflow on token") == -1 {
+			t.Errorf("got error: %v, expected nil error because input %s matches regexp %v",
+				err, s, re)
+		}
+
 	})
 }

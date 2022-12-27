@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -81,10 +82,11 @@ func ParseStatString(s string) (Stat, error) {
 	}
 
 	if len(s) < i+2 {
-		return ret, errors.New("input string too short")
+		return ret, errors.New("input string after last ')' too short")
 	}
 
-	_, err := fmt.Sscanf(strings.TrimSpace(s[i+1:]), "%c %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+	tailHay := strings.TrimSpace(s[i+1:])
+	_, err := fmt.Sscanf(tailHay, "%c %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 		&ret.State,
 		&ret.PPID,
 		&ret.PGID,
@@ -140,11 +142,6 @@ func ParseStatString(s string) (Stat, error) {
 		return ret, err
 	}
 
-	_, err = fmt.Sscanf(s[0:i+1], "%d", &ret.PID)
-	if err != nil {
-		return ret, err
-	}
-
 	h := strings.Index(s, "(")
 	if h == -1 {
 		return ret, errors.New("expected '('")
@@ -154,13 +151,28 @@ func ParseStatString(s string) (Stat, error) {
 		return ret, errors.New("expected '(' to come before ')'")
 	}
 
+	pidHay := s[0 : h+1]
+	_, err = fmt.Sscanf(pidHay, "%d (", &ret.PID)
+	if err != nil {
+		if errors.Is(err, strconv.ErrRange) {
+			return ret, err
+		}
+		_, err2 := fmt.Sscanf(pidHay, "%d(", &ret.PID)
+		if err2 != nil {
+			if errors.Is(err2, strconv.ErrRange) {
+				return ret, err2
+			}
+			return ret, fmt.Errorf("failed to parse PID in substring %s: %v, previous attempt failed with: %v", pidHay, err2, err)
+		}
+	}
+
 	comm := s[h+1 : i]
 	if len(comm) == 0 || strings.Index(comm, "\n") != -1 || strings.Index(comm, fmt.Sprintf("%c", 0)) != -1 {
 		return ret, errors.New("parsed commmand (comm): %s: should not be empty or contain newline or the zero character")
 	}
 	ret.Comm = comm
 
-	return ret, err
+	return ret, nil
 }
 
 // ParseStatBytes is like ParseStatString but it operates on a bytes
