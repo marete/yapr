@@ -94,8 +94,10 @@ func TestParseStatString(t *testing.T) {
 			t.Errorf("%v: got error %v but expectError is %v", tc, err, tc.expectError)
 		}
 
-		if st.Comm != tc.expectedCommName {
-			t.Errorf("%v: got Stat.Comm: %s, expected %s", tc, st.Comm, tc.expectedCommName)
+		if err != nil {
+			if st.Comm != tc.expectedCommName {
+				t.Errorf("%v: got Stat.Comm: %s, expected %s", tc, st.Comm, tc.expectedCommName)
+			}
 		}
 	}
 }
