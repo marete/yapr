@@ -78,11 +78,11 @@ func ParseStatString(s string) (Stat, error) {
 
 	i := strings.LastIndex(s, ")")
 	if i == -1 {
-		return ret, errors.New("expected ')'")
+		return Stat{}, errors.New("expected ')'")
 	}
 
 	if len(s) < i+2 {
-		return ret, errors.New("input string after last ')' too short")
+		return Stat{}, errors.New("input string after last ')' too short")
 	}
 
 	tailHay := strings.TrimSpace(s[i+1:])
@@ -139,36 +139,36 @@ func ParseStatString(s string) (Stat, error) {
 		&ret.ExitCode)
 
 	if err != nil {
-		return ret, err
+		return Stat{}, err
 	}
 
 	h := strings.Index(s, "(")
 	if h == -1 {
-		return ret, errors.New("expected '('")
+		return Stat{}, errors.New("expected '('")
 	}
 
 	if !(h < i) {
-		return ret, errors.New("expected '(' to come before ')'")
+		return Stat{}, errors.New("expected '(' to come before ')'")
 	}
 
 	pidHay := s[0 : h+1]
 	_, err = fmt.Sscanf(pidHay, "%d (", &ret.PID)
 	if err != nil {
 		if errors.Is(err, strconv.ErrRange) {
-			return ret, err
+			return Stat{}, err
 		}
 		_, err2 := fmt.Sscanf(pidHay, "%d(", &ret.PID)
 		if err2 != nil {
 			if errors.Is(err2, strconv.ErrRange) {
-				return ret, err2
+				return Stat{}, err2
 			}
-			return ret, fmt.Errorf("failed to parse PID in substring %s: %v, previous attempt failed with: %v", pidHay, err2, err)
+			return Stat{}, fmt.Errorf("failed to parse PID in substring %s: %v, previous attempt failed with: %v", pidHay, err2, err)
 		}
 	}
 
 	comm := s[h+1 : i]
 	if len(comm) == 0 || strings.Index(comm, "\n") != -1 || strings.Index(comm, fmt.Sprintf("%c", 0)) != -1 {
-		return ret, errors.New("parsed commmand (comm): %s: should not be empty or contain newline or the zero character")
+		return Stat{}, errors.New("parsed commmand (comm): %s: should not be empty or contain newline or the zero character")
 	}
 	ret.Comm = comm
 
